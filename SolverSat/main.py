@@ -1,29 +1,29 @@
 #nb de variables = nj * ne * ne
 
 #fonction qui calcule l'indice k d'une variable
-def codage(nc, nj, j, x, y):
-    return j * nc * nc + x * nc + y + 1
+def codage(ne, nj, j, x, y):
+    return j * ne * ne + x * ne + y + 1
 
-#k est ecrit en base nc
-def decodage(k, nc):
-    j = (k-1)//(nc*nc)
-    x = (k-j*nc*nc-1)//nc
-    y = k - 1 - j * nc * nc - x * nc
+#k est ecrit en base ne
+def decodage(k, ne):
+    j = (k-1)//(ne*ne)
+    x = (k-j*ne*ne-1)//ne
+    y = k - 1 - j * ne * ne - x * ne
     return j, x, y
 
 def au_moins_un_vrai(l):
     body = ""
     for i in l:
         body += str(i) +" "
-    body += "0"
+    body += "0" + "\n"
     return body
 
+#retourne le corps et le nombre de contraintes
 def au_plus_un_vrai(l):
     body = ""
     for index, i in enumerate(l):
         for j in l[index+1:]:
             body += "-"+str(i)+" -"+str(j)+" 0\n"
-
     return body
 
 def encoderC1(ne, nj):
@@ -43,29 +43,43 @@ def encoderC1(ne, nj):
 
 def encoderC2(ne, nj):
     l1, l2 = [], []
+    body = ""
     for x in range(ne):
         for y in range(ne):
-            for j in range(nj):
-                if (x!=y):
-                    l1.append(codage(ne, nj, j, x, y))
-                    l2.append(codage(ne, nj, j, y, x))
-            body += au_moins_un_vrai(l1)
-            body += au_moins_un_vrai(l2)
-            l1.clear()
-            l2.clear()
+            if (x != y):
+                for j in range(nj):
+                        l1.append(codage(ne, nj, j, x, y))
+                        l2.append(codage(ne, nj, j, y, x))
+                body += au_moins_un_vrai(l1)
+                body += au_moins_un_vrai(l2)
+                l1.clear()
+                l2.clear()
     return body
 
+
+'''
+pour le calcul du nombre de contraintes que 
+genere la fonction au_plus_un_vrai(l) avec l une liste de taille len, n=len-1
+il suffit de calculer la valeur suivante : 
+    n+(n-1)+(n-2)+(n-3)+...+(n-(n-1)) = n+n+n+..n - (0+1+2+...+n-1)
+    = n**2- ((n)*(n-1)) // 2
+donc on note nbCAUV(n) = n**2- ((n)*(n-1)) // 2, le nombre de clauses de que retourne 
+la fonction au_plus_un_vrai(l),
+donc la fonction encoderC1(ne, nj) va retourner nj * ne * nbCAUV(ne-2) * 2
+et pour encoderC2(ne, nj) on aura au final ne * (ne - 1) * 2 contraintes car la premiere 
+boucle parcours ne equipes et la secondes ne-1, et comme la fonction au_moins_un_vrais
+retourne une clause et qu'on l'appel deux fois donc au total on retourne ne*(ne-1)*2 clauses
+'''
+
+#calcul le nombre de clauses de la fonction au_plus_un_vrai
+def nbCAUV(n):
+    return n ** 2 - (n*(n-1)) // 2
+
 def encoder(ne, nj):
-    return encoderC1(ne, nj) + encoderC2(ne, nj)
+    nbVar = nj * ne * ne
+    nbClauseC1 = ne * nj * nbCAUV(ne-2) * 2
+    nbClauseC2 = ne * (ne - 1) * 2
+    return  "p cnf " + str(nbVar)+ " " + str(nbClauseC1+nbClauseC2)+ "\n" +encoderC1(ne, nj) + encoderC2(ne, nj)
 
-
-
-print(encoderC1(3,4))
-
-'''
-nc = 10
-nj = 10
-
-k = codage(nc, nj, 1, 1, 2)
-print(decodage(k, nc))
-'''
+if __name__ == '__main__':
+    print(encoder(3,4))
