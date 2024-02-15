@@ -29,33 +29,46 @@ def au_plus_un_vrai(l):
 def encoderC1(ne, nj):
     body = ""
     l1, l2 = [], []
+    list_equipes = range(ne)
     for j in range(nj):
-        for x in range(ne):
-            for y in range(ne):
+        for x in list_equipes:
+            for y in list_equipes:
                 if (x!=y) : #car une equipe ne joue pas un match avec elle meme
                     l1.append(codage(ne, nj, j, x, y))
                     l2.append(codage(ne, nj, j, y, x))
-            body += au_plus_un_vrai(l1) # a domicile
-            body += au_plus_un_vrai(l2) # a l'exterieur
+            body += au_plus_un_vrai(l2)
+            body += au_plus_un_vrai(l1)
             l1.clear()
             l2.clear()
     return body
 
+
+'''
+    on ajoute pas le cas ou y avec x directement dans une autre liste, car
+    on a que x varie dans [0,..,ne-1] et y aussi, donc on aura toutes les paires
+    [0,..,ne-1] * [0,...,ne-1] - [(0,0),(1,1),...,(ne-1, ne-1)]
+'''
 def encoderC2(ne, nj):
-    l1, l2 = [], []
+    l1 = []
     body = ""
-    for x in range(ne):
-        for y in range(ne):
-            if (x != y):
-                for j in range(nj):
-                        l1.append(codage(ne, nj, j, x, y))
-                        l2.append(codage(ne, nj, j, y, x))
+    list_equipes = range(ne)
+    for x in list_equipes:
+        for y in list_equipes:
+            if (x!=y):
+                for j in range(nj):#parcours de la liste de jours
+                    l1.append(codage(ne, nj, j, x, y))
                 body += au_moins_un_vrai(l1)
-                body += au_moins_un_vrai(l2)
                 l1.clear()
-                l2.clear()
     return body
 
+
+#C3 : une equipe ne peut pas jouer avec elle meme
+def encoderC3(ne, nj):
+    body = ""
+    for j in range(nj):
+        for x in range(ne):
+            body += "-" + str(codage(ne, nj, j, x, x)) + " 0" + "\n"
+    return body
 
 '''
 pour le calcul du nombre de contraintes que 
@@ -78,8 +91,12 @@ def nbCAUV(n):
 def encoder(ne, nj):
     nbVar = nj * ne * ne
     nbClauseC1 = ne * nj * nbCAUV(ne-2) * 2
-    nbClauseC2 = ne * (ne - 1) * 2
-    return  "p cnf " + str(nbVar)+ " " + str(nbClauseC1+nbClauseC2)+ "\n" +encoderC1(ne, nj) + encoderC2(ne, nj)
+    nbClauseC2 = ne * (ne - 1)
+    nbClauseC3 = ne * nj
+    nbTotalClauses = nbClauseC1 + nbClauseC2 + nbClauseC3
+    codage = encoderC1(ne, nj) + encoderC2(ne, nj) + encoderC3(ne, nj)
+    return  "p cnf " + str(nbVar) + " " + str(nbTotalClauses)+ "\n" + codage
 
 if __name__ == '__main__':
-    print(encoder(3,4))
+    with open('res.pl', 'w') as f:
+        f.write(encoder(3, 4))
