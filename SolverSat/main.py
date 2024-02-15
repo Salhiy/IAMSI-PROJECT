@@ -62,14 +62,6 @@ def encoderC2(ne, nj):
     return body
 
 
-#C3 : une equipe ne peut pas jouer avec elle meme
-def encoderC3(ne, nj):
-    body = ""
-    for j in range(nj):
-        for x in range(ne):
-            body += "-" + str(codage(ne, nj, j, x, x)) + " 0" + "\n"
-    return body
-
 '''
 pour le calcul du nombre de contraintes que 
 genere la fonction au_plus_un_vrai(l) avec l une liste de taille len, n=len-1
@@ -89,12 +81,11 @@ def nbCAUV(n):
     return n ** 2 - (n*(n-1)) // 2
 
 def encoder(ne, nj):
-    nbVar = nj * ne * ne
+    nbVar = nj * ne * ne - ne * nj
     nbClauseC1 = ne * nj * nbCAUV(ne-2) * 2
     nbClauseC2 = ne * (ne - 1)
-    nbClauseC3 = ne * nj
-    nbTotalClauses = nbClauseC1 + nbClauseC2 + nbClauseC3
-    codage = encoderC1(ne, nj) + encoderC2(ne, nj) + encoderC3(ne, nj)
+    nbTotalClauses = nbClauseC1 + nbClauseC2
+    codage = encoderC1(ne, nj) + encoderC2(ne, nj)
     return  "p cnf " + str(nbVar) + " " + str(nbTotalClauses)+ "\n" + codage
 
 if __name__ == '__main__':
