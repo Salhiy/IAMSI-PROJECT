@@ -72,7 +72,7 @@ il suffit de calculer la valeur suivante :
     = n**2- ((n)*(n-1)) // 2
 donc on note nbCAUV(n) = n**2- ((n)*(n-1)) // 2, le nombre de clauses de que retourne 
 la fonction au_plus_un_vrai(l),
-donc la fonction encoderC1(ne, nj) va retourner nj * ne * nbCAUV(2*(ne-2)) * 2
+donc la fonction encoderC1(ne, nj) va retourner nj * ne * nbCAUV(2*(ne-1)-1)
 et pour encoderC2(ne, nj) on aura au final ne * (ne - 1) * 2 contraintes car la premiere 
 boucle parcours ne equipes et la secondes ne-1, et comme la fonction au_moins_un_vrais
 retourne une clause et qu'on l'appel deux fois donc au total on retourne ne*(ne-1)*2 clauses
@@ -84,7 +84,7 @@ def nbCAUV(n):
 
 def encoder(ne, nj):
     nbVar = nj * ne * ne
-    nbClauseC1 = ne * nj * nbCAUV(2*(ne-2)) * 2
+    nbClauseC1 = ne * nj * nbCAUV((ne-1)*2 - 1)
     nbClauseC2 = ne * (ne - 1)
     nbTotalClauses = nbClauseC1 + nbClauseC2
     codage = encoderC1(ne, nj) + encoderC2(ne, nj)
@@ -98,6 +98,8 @@ def recuperNomEquipe(f, i):
         for index, ligne in enumerate(file):
             if i == index :
                 return ligne
+    #erreur dans le fichier equipes
+    sys.exit(-1)
 
 #pour lire la reponse du resultat dimacs
 def liteReponse(file, equipe, ne):
@@ -136,4 +138,4 @@ if __name__ == '__main__':
     #attends l'ecriture du fichier...
     time.sleep(0.1)
     #lecture des reponses
-    liteReponse('model.txt', 'nomEquipe.txt', ne)
+    liteReponse('model.txt', 'equipes.txt', ne)
