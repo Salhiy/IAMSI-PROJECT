@@ -130,7 +130,7 @@ if __name__ == '__main__':
     with open('res.pl', 'w') as f:
         f.write(encoder(ne, nj))
     #execution de glucose
-    command = './glucose -modele res.pl > model.txt' 
+    command = './glucose -model res.pl > model.txt' 
     subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     #lecture des reponses
     liteReponse('model.txt', 'nomEquipe.txt', ne)
