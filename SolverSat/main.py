@@ -1,6 +1,6 @@
-import subprocess
 import sys
 import os
+import time
 
 #nb de variables = nj * ne * ne
 
@@ -128,10 +128,12 @@ if __name__ == '__main__':
     nj = int(sys.argv[2])
 
     #ecriture dans un fichier du programme pl
-    #with open('res.pl', "w") as f:
-        #f.write(encoder(ne, nj))
+    with open('res.pl', "w") as f:
+        f.write(encoder(ne, nj))
     #execution de glucose
-    #command = './glucose -model res.pl > model.txt' 
-    #subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    command = './glucose -model res.pl > model.txt' 
+    os.system(command)
+    #attends l'ecriture du fichier...
+    time.sleep(0.1)
     #lecture des reponses
     liteReponse('model.txt', 'nomEquipe.txt', ne)
