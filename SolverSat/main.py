@@ -81,7 +81,7 @@ def nbCAUV(n):
     return n ** 2 - (n*(n-1)) // 2
 
 def encoder(ne, nj):
-    nbVar = nj * ne * ne - ne * nj
+    nbVar = nj * ne * ne
     nbClauseC1 = ne * nj * nbCAUV(ne-2) * 2
     nbClauseC2 = ne * (ne - 1)
     nbTotalClauses = nbClauseC1 + nbClauseC2
