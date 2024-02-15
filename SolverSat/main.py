@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 
 #nb de variables = nj * ne * ne
 
@@ -91,7 +92,7 @@ def encoder(ne, nj):
 
 #recuperation du nom d'une equipe
 def recuperNomEquipe(f, i):
-    if f is None:
+    if f is None or not os.path.exists(f):
         return str(i)
     with open(f, 'r') as file:
         for index, ligne in enumerate(file):
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     nj = int(sys.argv[2])
 
     #ecriture dans un fichier du programme pl
-    with open('res.pl', 'w') as f:
+    with open('res.pl', "w") as f:
         f.write(encoder(ne, nj))
     #execution de glucose
     command = './glucose -model res.pl > model.txt' 
