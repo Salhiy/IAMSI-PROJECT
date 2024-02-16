@@ -87,7 +87,7 @@ def encoder(ne, nj):
     nbClauseC1 = ne * nj * nbCAUV((ne-1)*2 - 1)
     nbClauseC2 = ne * (ne - 1)
     nbTotalClauses = nbClauseC1 + nbClauseC2
-    codage = encoderC1(ne, nj) + encoderC2(ne, nj)
+    codage = encoderC1(ne, nj) + encoderC2(ne, nj) + encoderC6C7(ne, nj)
     return  "p cnf " + str(nbVar) + " " + str(nbTotalClauses)+ "\n" + codage
 
 #recuperation du nom d'une equipe
@@ -100,6 +100,9 @@ def recuperNomEquipe(f, i):
                 return ligne.replace('\n', '')
     #erreur dans le fichier equipes
     sys.exit(-1)
+
+def lireJour(j):
+    return "Dimanche" if j % 2 == 0 else "Mercredi"
 
 #pour lire la reponse du resultat dimacs
 def liteReponse(file, equipe, ne):
@@ -115,7 +118,7 @@ def liteReponse(file, equipe, ne):
         r = int(r)
         if (r>=0):
             j, x, y = (decodage(r, ne))
-            print("l'equipe "+recuperNomEquipe(equipe, x)+" joue contre "+recuperNomEquipe(equipe, y)+" le jour "+str(j))
+            print("l'equipe "+recuperNomEquipe(equipe, x)+" joue contre "+recuperNomEquipe(equipe, y)+" le jour "+ lireJour(j))
 
 #generation des sous tableau de taille k d un tableau de taille n
 def gen_sou_tableau_k(arr, k, start=0, current=[]):
@@ -145,21 +148,74 @@ def au_plus_k(l, k):
         body+=au_plus_un_vrai(tab)
     return body
 
+'''
+    C4 : 'chaque equipe joue au moins Pext% match a l'exterieur le dimanche'
+'''
 def encoderC4(ne, nj, pext):
     body = ""
     l1 = []
     list_equipes = range(ne)
-    for j in range(nj):
-        if (j%2==0):#pour les dimanches
-            for x in list_equipes:
-                for y in list_equipes:
-                    if (x!=y) : #car une equipe ne joue pas un match avec elle meme
-                        l1.append(codage(ne, nj, j, x, y))
-                body += au_plus_k(l1, int((ne-1) * 0,5 * pext))
-                l1.clear()
+    for x in list_equipes:
+        for y in list_equipes:
+            if (x!=y) : #car une equipe ne joue pas un match avec elle meme
+                for j in range(nj):
+                    if (j%2==1):#pour les mercredi
+                        l1.append(codage(ne, nj, j, y, x))#on prends que les matchs a l'exterieurs les mercredis
+        #au plus (ne-1) * (1-pext) matchs a l'exterieur le mercredie, car
+        #en effet pour jouer au moins k match a l'extertieur le dimance
+        #il faut jouer au plus k match a l'extertieur le mercredi avec 
+        #avec une proba de 1-pext, et comme
+        #chaque equipe joue au max ne-1 match a l'extertieur les dimanches 
+        body += au_plus_k(l1, int((ne-1) * (1-pext)))
+        l1.clear()
     return body
 
 '''
+    C5 : 'chaque equipe joue au moins Pdom% match a domicile le dimanche'
+'''
+def encoderC5(ne, nj, pdom):
+    body = ""
+    l1 = []
+    list_equipes = range(ne)
+    for x in list_equipes:
+        for y in list_equipes:
+            if (x!=y) : #car une equipe ne joue pas un match avec elle meme
+                for j in range(nj):
+                    if (j%2==1):#pour les mercredi
+                        l1.append(codage(ne, nj, j, x, y))#on prends que les matchs a domicile les mercredis
+        #au plus (ne-1) * (1-pdom) matchs a domicile le mercredie, car
+        #en effet pour jouer au moins k match a domicile le dimanche
+        #il faut jouer au plus k match a domicile le mercredi avec 
+        #avec une proba de 1-pdom, et comme
+        #chaque equipe joue au max ne-1 match a domicile les dimanches 
+        body += au_plus_k(l1, int((ne-1) * (1-pdom)))
+        l1.clear()
+    return body
+
+'''
+    C6 : 'aucune equipe ne joue plus de 2 match consecutifs a l'exterieur'
+    C7 : 'aucune equipe ne joue plus de 2 match consecutifs a domicile'
+'''
+def encoderC6C7(ne, nj):
+    body = ""
+    l1, l2 = [], []
+    list_equipes = range(ne)
+    overlap = False
+    for x in list_equipes:
+        for j in range(nj):
+            for y in list_equipes:
+                if (x!=y) : #car une equipe ne joue pas un match avec elle meme
+                    l1.append(codage(ne, nj, j, y, x))#exterieur
+                    l2.append(codage(ne, nj, j, x, y))#domicile
+            if (j==1 or overlap):#on alterne les jours 
+                overlap = True
+                body += au_plus_un_vrai(l1)
+                body += au_plus_un_vrai(l2)
+                l1 = l1[ne:]#on garde le jour courant pour la prochaine iteration
+                l2 = l2[ne:]
+    return body
+
+
 if __name__ == '__main__':
     if (len(sys.argv) < 3):
         print('Erreur dans le nombre de parametres')
@@ -182,4 +238,3 @@ if __name__ == '__main__':
     time.sleep(0.1)
     #lecture des reponses
     liteReponse('model.txt', 'equipes.txt', ne)
-'''
