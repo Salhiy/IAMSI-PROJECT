@@ -97,7 +97,7 @@ def recuperNomEquipe(f, i):
     with open(f, 'r') as file:
         for index, ligne in enumerate(file):
             if i == index :
-                return ligne
+                return ligne.replace('\n', '')
     #erreur dans le fichier equipes
     sys.exit(-1)
 
@@ -117,6 +117,49 @@ def liteReponse(file, equipe, ne):
             j, x, y = (decodage(r, ne))
             print("l'equipe "+recuperNomEquipe(equipe, x)+" joue contre "+recuperNomEquipe(equipe, y)+" le jour "+str(j))
 
+#generation des sous tableau de taille k d un tableau de taille n
+def gen_sou_tableau_k(arr, k, start=0, current=[]):
+    if len(current) == k:
+        return [current[:]]
+    
+    res = []
+
+    for i in range(start, len(arr)):
+        res.extend(gen_sou_tableau_k(arr, k, i+1, current + [arr[i]]))
+
+    return res
+
+'''
+on genere tous les sous tableau de taille n-k+1, avec n = len(l)
+donc si on a que au plus une variable est vrai dans le sous tableau
+on faisons cela pour tous les tableau, on aura bien que au plus k variables
+sont vrai,  
+'''
+def au_plus_k(l, k):
+    if (len(l)<k-1):
+        print('erreur, k est trod grand')
+        sys.exit(-1)
+    sous_tableau = gen_sou_tableau_k(l, len(l)-k+1)
+    body = ""
+    for tab in sous_tableau:
+        body+=au_plus_un_vrai(tab)
+    return body
+
+def encoderC4(ne, nj, pext):
+    body = ""
+    l1 = []
+    list_equipes = range(ne)
+    for j in range(nj):
+        if (j%2==0):#pour les dimanches
+            for x in list_equipes:
+                for y in list_equipes:
+                    if (x!=y) : #car une equipe ne joue pas un match avec elle meme
+                        l1.append(codage(ne, nj, j, x, y))
+                body += au_plus_k(l1, int((ne-1) * pext))
+                l1.clear()
+    return body
+
+'''
 if __name__ == '__main__':
     if (len(sys.argv) < 3):
         print('Erreur dans le nombre de parametres')
@@ -139,3 +182,4 @@ if __name__ == '__main__':
     time.sleep(0.1)
     #lecture des reponses
     liteReponse('model.txt', 'equipes.txt', ne)
+'''
