@@ -2,6 +2,9 @@ import sys
 import os
 import time
 
+pext = 0.5
+pdom = 0.5
+
 #nb de variables = nj * ne * ne
 
 #fonction qui calcule l'indice k d'une variable
@@ -123,8 +126,18 @@ def liteReponse(file, equipe, ne, affiche=True):
                 j, x, y = (decodage(r, ne))
                 print(f"l'equipe {recuperNomEquipe(equipe, x)} joue contre {recuperNomEquipe(equipe, y)} le jour {lireJour(j)}")
     return True #sat
-
-#question 4 : trouver
+'''
+question 4 : trouver les valeurs minimal pour le nombre de jour:
+    pour : 
+        ne = 3 nj = 6
+        ne = 4 nj = 6
+        ne = 5 nj = 10
+        ne = 6 nj = 10
+        ne = 7 nj = 14
+        ne = 8 nj = 14
+        ne = 9 nj = 18
+        ne = 10 nj = 18
+'''
 def optimisation(timout=10, encoderCs=[]):
     for ne in range(3, 11):
         for nj in range(ne+2, ne*10):
@@ -164,7 +177,7 @@ def au_plus_k(l, k):
 '''
     C4 : 'chaque equipe joue au moins Pext% match a l'exterieur le dimanche'
 '''
-def encoderC4(ne, nj, pext):
+def encoderC4(ne, nj):
     body = ""
     l1 = []
     list_equipes = range(ne)
@@ -186,7 +199,7 @@ def encoderC4(ne, nj, pext):
 '''
     C5 : 'chaque equipe joue au moins Pdom% match a domicile le dimanche'
 '''
-def encoderC5(ne, nj, pdom):
+def encoderC5(ne, nj):
     body = ""
     l1 = []
     list_equipes = range(ne)
@@ -229,6 +242,7 @@ def encoderC6C7(ne, nj):
                 
     return body
 
+#encoderCs represente les fonctions qui seront appelées au moment de l'encodage
 def run(args, timeout = None, affiche=True, encoderCs=[]):
     if (len(args) < 3):
         print('Erreur dans le nombre de parametres')
@@ -241,14 +255,17 @@ def run(args, timeout = None, affiche=True, encoderCs=[]):
     ne = int(args[1])
     nj = int(args[2])
 
+    time = time.time()
+    nameFile = f'res{time}.pl'#pour creer a chaque fois des fichier unique
+
     #ecriture dans un fichier du programme pl
-    with open('res.pl', "w") as f:
+    with open(nameFile, "w") as f:
         f.write(encoder(ne, nj, encoderCs))
     #execution de glucose
     if timeout == None:
-        command = './glucose -model res.pl > model.txt'
+        command = f'./glucose -model nameFile > model.txt'
     else:
-        command = f'timeout {timeout}s ./glucose -model res.pl > model.txt'
+        command = f'timeout {timeout}s ./glucose -model {nameFile} > model.txt'
     start_time = time.time()
     os.system(command)
     execution_time = time.time() - start_time
@@ -261,5 +278,11 @@ def run(args, timeout = None, affiche=True, encoderCs=[]):
     return liteReponse('model.txt', 'equipes.txt', ne, affiche)
 
 if __name__ == '__main__':
-    #run(sys.argv)
+    #ne = 3 nj = 4
+    run([3, 4], encoderCs=[encoderC1, encoderC2])
+    #ne = 3 nj = 4
+    run([5, 10], encoderCs=[encoderC1, encoderC2])
+    #calcul des nj min
     optimisation(encoderCs=[encoderC1, encoderC2])
+    #avec les optimisations
+    run(encoderCs=[encoderC1, encoderC2, encoderC4, encoderC5, encoderC6C7])
