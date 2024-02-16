@@ -102,7 +102,7 @@ def recuperNomEquipe(f, i):
     sys.exit(-1)
 
 def lireJour(j):
-    return "Dimanche" if j % 2 == 0 else "Mercredi"
+    return "Dimanche("+str(j)+")" if j % 2 == 0 else "Mercredi("+str(j)+")"
 
 #pour lire la reponse du resultat dimacs
 def liteReponse(file, equipe, ne):
@@ -211,8 +211,9 @@ def encoderC6C7(ne, nj):
                 overlap = True
                 body += au_plus_un_vrai(l1)
                 body += au_plus_un_vrai(l2)
-                l1 = l1[ne:]#on garde le jour courant pour la prochaine iteration
-                l2 = l2[ne:]
+                l1 = l1[len(l2)//2:]#on garde le jour courant pour la prochaine iteration
+                l2 = l2[len(l2)//2:]
+                
     return body
 
 
