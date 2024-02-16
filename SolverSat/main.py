@@ -141,7 +141,7 @@ question 4 : trouver les valeurs minimal pour le nombre de jour:
 def optimisation(timout=10, encoderCs=[]):
     for ne in range(3, 11):
         for nj in range(ne+2, ne*10):
-            if (run(['', ne, nj], timout, affiche=False, encoderCs=encoderCs)):
+            if (run([ne, nj], timout, affiche=False, encoderCs=encoderCs)):
                 print(f'le nombre de jour minimum pour {str(ne)} equipes est de {str(nj)}')
                 break
 
@@ -244,7 +244,7 @@ def encoderC6C7(ne, nj):
 
 #encoderCs represente les fonctions qui seront appelées au moment de l'encodage
 def run(args, timeout = None, affiche=True, encoderCs=[]):
-    if (len(args) < 3):
+    if (len(args) < 2):
         print('Erreur dans le nombre de parametres')
         print('\tIl faut le nombre d\'equipes et le nombre de jours')
         print('\t\tpython main.py ne nj')
@@ -252,24 +252,24 @@ def run(args, timeout = None, affiche=True, encoderCs=[]):
         print('\t\tpython main.py 4 5')
         sys.exit()
     
-    ne = int(args[1])
-    nj = int(args[2])
+    ne = int(args[0])
+    nj = int(args[1])
 
-    time = time.time()
-    nameFile = f'res{time}.pl'#pour creer a chaque fois des fichier unique
+    sec = time.time()
+    nameFile = f'res{sec}.pl'#pour creer a chaque fois des fichier unique
 
     #ecriture dans un fichier du programme pl
     with open(nameFile, "w") as f:
         f.write(encoder(ne, nj, encoderCs))
     #execution de glucose
     if timeout == None:
-        command = f'./glucose -model nameFile > model.txt'
+        command = f'./glucose -model {nameFile} > model.txt'
     else:
         command = f'timeout {timeout}s ./glucose -model {nameFile} > model.txt'
     start_time = time.time()
     os.system(command)
     execution_time = time.time() - start_time
-    if (execution_time > timeout):
+    if (timeout != None and execution_time > timeout):
         return False
 
     #attends l'ecriture du fichier...
@@ -285,4 +285,4 @@ if __name__ == '__main__':
     #calcul des nj min
     optimisation(encoderCs=[encoderC1, encoderC2])
     #avec les optimisations
-    run(encoderCs=[encoderC1, encoderC2, encoderC4, encoderC5, encoderC6C7])
+    run([4, 8], encoderCs=[encoderC1, encoderC2, encoderC4, encoderC5, encoderC6C7])
