@@ -82,12 +82,14 @@ retourne une clause et qu'on l'appel deux fois donc au total on retourne ne*(ne-
 def nbCAUV(n):
     return n ** 2 - (n*(n-1)) // 2
 
-def encoder(ne, nj):
+def encoder(ne, nj, encoderCs):
     nbVar = nj * ne * ne
     nbClauseC1 = ne * nj * nbCAUV((ne-1)*2 - 1)
     nbClauseC2 = ne * (ne - 1)
+    codage = ""
+    for encoderC in encoderCs:
+        codage += encoderC(ne, nj)
     nbTotalClauses = nbClauseC1 + nbClauseC2
-    codage = encoderC1(ne, nj) + encoderC2(ne, nj) + encoderC6C7(ne, nj)
     return  "p cnf " + str(nbVar) + " " + str(nbTotalClauses)+ "\n" + codage
 
 #recuperation du nom d'une equipe
@@ -112,7 +114,7 @@ def liteReponse(file, equipe, ne, affiche=True):
             last_line = ligne.strip()
     resp = last_line.split(' ')
     if (resp[1] == 'UNSATISFIABLE'):
-        print("pas de solution !!")
+        if (affiche): print("pas de solution !!")
         return False #unsat
     if (affiche):
         for r in resp[1:len(resp)-1]:
@@ -123,13 +125,12 @@ def liteReponse(file, equipe, ne, affiche=True):
     return True #sat
 
 #question 4 : trouver
-def optimisation(timout=10, start=-1, end=-1):
+def optimisation(timout=10, encoderCs=[]):
     for ne in range(3, 11):
-        for nj in range(start if start!=-1 else ne+1, end if end!=-1 else ne*2):
-            if (run(['', ne, nj], timout, affiche=False)):
-                print(f'le nombre de jour minimum de jour pour {str(ne)} equipes est de {str(nj)}')
-                return
-    optimisation(timout, start=end+1, end=end*2)#on cherche les autres cas
+        for nj in range(ne+2, ne*10):
+            if (run(['', ne, nj], timout, affiche=False, encoderCs=encoderCs)):
+                print(f'le nombre de jour minimum pour {str(ne)} equipes est de {str(nj)}')
+                break
 
 #generation des sous tableau de taille k d un tableau de taille n, en sachant 
 #que l'odre n'est pas important : [1,2,3] = [3,1,2] = [3,2,1] ....
@@ -228,7 +229,7 @@ def encoderC6C7(ne, nj):
                 
     return body
 
-def run(args, timout = None, affiche=True):
+def run(args, timeout = None, affiche=True, encoderCs=[]):
     if (len(args) < 3):
         print('Erreur dans le nombre de parametres')
         print('\tIl faut le nombre d\'equipes et le nombre de jours')
@@ -242,12 +243,12 @@ def run(args, timout = None, affiche=True):
 
     #ecriture dans un fichier du programme pl
     with open('res.pl', "w") as f:
-        f.write(encoder(ne, nj))
+        f.write(encoder(ne, nj, encoderCs))
     #execution de glucose
     if timeout == None:
         command = './glucose -model res.pl > model.txt'
     else:
-         command = f'timeout {timeout}s ./glucose -model res.pl > model.txt'
+        command = f'timeout {timeout}s ./glucose -model res.pl > model.txt'
     start_time = time.time()
     os.system(command)
     execution_time = time.time() - start_time
@@ -260,4 +261,5 @@ def run(args, timout = None, affiche=True):
     return liteReponse('model.txt', 'equipes.txt', ne, affiche)
 
 if __name__ == '__main__':
-    run(sys.argv)
+    #run(sys.argv)
+    optimisation(encoderCs=[encoderC1, encoderC2])
