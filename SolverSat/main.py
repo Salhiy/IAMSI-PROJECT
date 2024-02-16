@@ -155,7 +155,7 @@ def encoderC4(ne, nj, pext):
                 for y in list_equipes:
                     if (x!=y) : #car une equipe ne joue pas un match avec elle meme
                         l1.append(codage(ne, nj, j, x, y))
-                body += au_plus_k(l1, int((ne-1) * pext))
+                body += au_plus_k(l1, int((ne-1) * 0,5 * pext))
                 l1.clear()
     return body
 
