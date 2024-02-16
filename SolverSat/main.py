@@ -105,7 +105,7 @@ def lireJour(j):
     return "Dimanche("+str(j)+")" if j % 2 == 0 else "Mercredi("+str(j)+")"
 
 #pour lire la reponse du resultat dimacs
-def liteReponse(file, equipe, ne):
+def liteReponse(file, equipe, ne, affiche=True):
     last_line = None
     with open(file, 'r') as f:
         for ligne in f:
@@ -113,14 +113,26 @@ def liteReponse(file, equipe, ne):
     resp = last_line.split(' ')
     if (resp[1] == 'UNSATISFIABLE'):
         print("pas de solution !!")
-        return
-    for r in resp[1:len(resp)-1]:
-        r = int(r)
-        if (r>=0):
-            j, x, y = (decodage(r, ne))
-            print("l'equipe "+recuperNomEquipe(equipe, x)+" joue contre "+recuperNomEquipe(equipe, y)+" le jour "+ lireJour(j))
+        return False #unsat
+    if (affiche):
+        for r in resp[1:len(resp)-1]:
+            r = int(r)
+            if (r>=0):
+                j, x, y = (decodage(r, ne))
+                print(f"l'equipe {recuperNomEquipe(equipe, x)} joue contre {recuperNomEquipe(equipe, y)} le jour {lireJour(j)}")
+    return True #sat
 
-#generation des sous tableau de taille k d un tableau de taille n
+#question 4 : trouver
+def optimisation(timout=10, start=-1, end=-1):
+    for ne in range(3, 11):
+        for nj in range(start if start!=-1 else ne+1, end if end!=-1 else ne*2):
+            if (run(['', ne, nj], timout, affiche=False)):
+                print(f'le nombre de jour minimum de jour pour {str(ne)} equipes est de {str(nj)}')
+                return
+    optimisation(timout, start=end+1, end=end*2)#on cherche les autres cas
+
+#generation des sous tableau de taille k d un tableau de taille n, en sachant 
+#que l'odre n'est pas important : [1,2,3] = [3,1,2] = [3,2,1] ....
 def gen_sou_tableau_k(arr, k, start=0, current=[]):
     if len(current) == k:
         return [current[:]]
@@ -134,8 +146,8 @@ def gen_sou_tableau_k(arr, k, start=0, current=[]):
 
 '''
 on genere tous les sous tableau de taille n-k+1, avec n = len(l)
-donc si on a que au plus une variable est vrai dans le sous tableau
-on faisons cela pour tous les tableau, on aura bien que au plus k variables
+donc si on a que au plus une variable est vrai dans le sous tableau, et que
+on fait cela pour tous les tableau, on aura bien que au plus k variables
 sont vrai,  
 '''
 def au_plus_k(l, k):
@@ -212,13 +224,12 @@ def encoderC6C7(ne, nj):
                 body += au_plus_un_vrai(l1)
                 body += au_plus_un_vrai(l2)
                 l1 = l1[len(l2)//2:]#on garde le jour courant pour la prochaine iteration
-                l2 = l2[len(l2)//2:]
+                l2 = l2[len(l2)//2:]#on garde la trace du jour courant pour pouvoir le verifier apres
                 
     return body
 
-
-if __name__ == '__main__':
-    if (len(sys.argv) < 3):
+def run(args, timout = None, affiche=True):
+    if (len(args) < 3):
         print('Erreur dans le nombre de parametres')
         print('\tIl faut le nombre d\'equipes et le nombre de jours')
         print('\t\tpython main.py ne nj')
@@ -226,16 +237,27 @@ if __name__ == '__main__':
         print('\t\tpython main.py 4 5')
         sys.exit()
     
-    ne = int(sys.argv[1])
-    nj = int(sys.argv[2])
+    ne = int(args[1])
+    nj = int(args[2])
 
     #ecriture dans un fichier du programme pl
     with open('res.pl', "w") as f:
         f.write(encoder(ne, nj))
     #execution de glucose
-    command = './glucose -model res.pl > model.txt' 
+    if timeout == None:
+        command = './glucose -model res.pl > model.txt'
+    else:
+         command = f'timeout {timeout}s ./glucose -model res.pl > model.txt'
+    start_time = time.time()
     os.system(command)
+    execution_time = time.time() - start_time
+    if (execution_time > timeout):
+        return False
+
     #attends l'ecriture du fichier...
     time.sleep(0.1)
     #lecture des reponses
-    liteReponse('model.txt', 'equipes.txt', ne)
+    return liteReponse('model.txt', 'equipes.txt', ne, affiche)
+
+if __name__ == '__main__':
+    run(sys.argv)
